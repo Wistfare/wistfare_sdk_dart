@@ -1,0 +1,9 @@
+name: wistfare_sdk
+repository: https://github.com/wistfare/wistfare-dart
+
+packages:
+  - packages/*
+
+command:
+  bootstrap:
+    usePubspecOverrides: true
