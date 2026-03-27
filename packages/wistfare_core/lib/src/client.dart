@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'errors.dart';
 
-const _defaultBaseUrl = 'https://api.wistfare.com';
+const _defaultBaseUrl = 'https://api-production.wistfare.com';
 const _defaultTimeout = Duration(seconds: 30);
 const _sdkVersion = '0.1.0';
 
@@ -46,12 +46,14 @@ class Wistfare {
   }) async {
     final uri = Uri.parse('$baseUrl$path').replace(queryParameters: query);
     Exception? lastError;
+    var skipBackoff = false;
 
     for (var attempt = 0; attempt <= maxRetries; attempt++) {
-      if (attempt > 0) {
+      if (attempt > 0 && !skipBackoff) {
         final delay = min(1000 * pow(2, attempt - 1).toInt(), 10000) + Random().nextInt(500);
         await Future.delayed(Duration(milliseconds: delay));
       }
+      skipBackoff = false;
 
       try {
         final request = http.Request(method, uri);
@@ -89,6 +91,7 @@ class Wistfare {
           final retryAfter = int.tryParse(response.headers['retry-after'] ?? '5') ?? 5;
           if (attempt < maxRetries) {
             await Future.delayed(Duration(seconds: retryAfter));
+            skipBackoff = true;
             continue;
           }
           throw RateLimitException(retryAfter, requestId);

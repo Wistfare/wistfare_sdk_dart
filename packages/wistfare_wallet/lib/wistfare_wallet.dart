@@ -1,4 +1,4 @@
-/// Wistfare Wallet SDK — balances, transfers, deposits & withdrawals.
+/// Wistfare Wallet SDK — retrieve wallets and transfer funds.
 library;
 
 export 'src/client.dart';

@@ -38,7 +38,7 @@ void main() {
 
     test('uses default base URL when none provided', () {
       final client = Wistfare(apiKey: 'wf_test_abc');
-      expect(client.baseUrl, 'https://api.wistfare.com');
+      expect(client.baseUrl, 'https://api-production.wistfare.com');
       client.close();
     });
 

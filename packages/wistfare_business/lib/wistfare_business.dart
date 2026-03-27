@@ -1,4 +1,4 @@
-/// Wistfare Business SDK — manage businesses, staff, teams & API keys.
+/// Wistfare Business SDK — read-only access to businesses.
 library;
 
 export 'src/client.dart';

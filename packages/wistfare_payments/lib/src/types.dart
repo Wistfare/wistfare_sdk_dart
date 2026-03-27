@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Fee configuration for a business.
 class FeeConfig {
   final String id;
@@ -58,53 +60,22 @@ enum TransactionType {
 enum FeeModel {
   percentage,
   flat,
-  percentagePlusFlat;
+  percentagePlusFlat,
+  mixed;
 
   String toJson() => switch (this) {
         percentage => 'percentage',
         flat => 'flat',
         percentagePlusFlat => 'percentage_plus_flat',
+        mixed => 'mixed',
       };
 
   static FeeModel fromString(String value) => switch (value) {
         'percentage' => percentage,
         'flat' => flat,
         'percentage_plus_flat' => percentagePlusFlat,
+        'mixed' => mixed,
         _ => throw ArgumentError('Unknown FeeModel: $value'),
-      };
-}
-
-/// Parameters for setting a fee configuration.
-class SetFeeConfigParams {
-  final String businessId;
-  final TransactionType transactionType;
-  final FeeModel feeModel;
-  final String? percentageRate;
-  final String? flatAmount;
-  final String? minFee;
-  final String? maxFee;
-  final String? currency;
-
-  const SetFeeConfigParams({
-    required this.businessId,
-    required this.transactionType,
-    required this.feeModel,
-    this.percentageRate,
-    this.flatAmount,
-    this.minFee,
-    this.maxFee,
-    this.currency,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'business_id': businessId,
-        'transaction_type': transactionType.name,
-        'fee_model': feeModel.toJson(),
-        if (percentageRate != null) 'percentage_rate': percentageRate,
-        if (flatAmount != null) 'flat_amount': flatAmount,
-        if (minFee != null) 'min_fee': minFee,
-        if (maxFee != null) 'max_fee': maxFee,
-        if (currency != null) 'currency': currency,
       };
 }
 
@@ -115,16 +86,16 @@ class PaymentRequest {
   final String walletId;
   final PaymentRequestType requestType;
   final String shortCode;
-  final String amount;
+  final String? amount;
   final String currency;
-  final String description;
-  final String customerPhone;
-  final String customerName;
+  final String? description;
+  final String? customerPhone;
+  final String? customerName;
   final PaymentRequestStatus status;
-  final String qrData;
+  final String? qrData;
   final int maxUses;
   final int useCount;
-  final String expiresAt;
+  final String? expiresAt;
   final String createdAt;
 
   const PaymentRequest({
@@ -133,16 +104,16 @@ class PaymentRequest {
     required this.walletId,
     required this.requestType,
     required this.shortCode,
-    required this.amount,
+    this.amount,
     required this.currency,
-    required this.description,
-    required this.customerPhone,
-    required this.customerName,
+    this.description,
+    this.customerPhone,
+    this.customerName,
     required this.status,
-    required this.qrData,
+    this.qrData,
     required this.maxUses,
     required this.useCount,
-    required this.expiresAt,
+    this.expiresAt,
     required this.createdAt,
   });
 
@@ -151,17 +122,17 @@ class PaymentRequest {
         businessId: json['business_id'] as String,
         walletId: json['wallet_id'] as String,
         requestType: PaymentRequestType.fromString(json['request_type'] as String),
-        shortCode: json['short_code'] as String,
-        amount: json['amount'] as String,
-        currency: json['currency'] as String,
-        description: json['description'] as String,
-        customerPhone: json['customer_phone'] as String,
-        customerName: json['customer_name'] as String,
+        shortCode: json['short_code'] as String? ?? '',
+        amount: json['amount'] as String?,
+        currency: json['currency'] as String? ?? 'RWF',
+        description: json['description'] as String?,
+        customerPhone: json['customer_phone'] as String?,
+        customerName: json['customer_name'] as String?,
         status: PaymentRequestStatus.fromString(json['status'] as String),
-        qrData: json['qr_data'] as String,
-        maxUses: json['max_uses'] as int,
-        useCount: json['use_count'] as int,
-        expiresAt: json['expires_at'] as String,
+        qrData: json['qr_data'] as String?,
+        maxUses: json['max_uses'] as int? ?? 0,
+        useCount: json['use_count'] as int? ?? 0,
+        expiresAt: json['expires_at'] as String?,
         createdAt: json['created_at'] as String,
       );
 }
@@ -169,18 +140,30 @@ class PaymentRequest {
 enum PaymentRequestType {
   oneTime,
   recurring,
-  openAmount;
+  openAmount,
+  qrStatic,
+  qrDynamic,
+  paymentLink,
+  paymentPrompt;
 
   String toJson() => switch (this) {
         oneTime => 'one_time',
         recurring => 'recurring',
         openAmount => 'open_amount',
+        qrStatic => 'qr_static',
+        qrDynamic => 'qr_dynamic',
+        paymentLink => 'payment_link',
+        paymentPrompt => 'payment_prompt',
       };
 
   static PaymentRequestType fromString(String value) => switch (value) {
         'one_time' => oneTime,
         'recurring' => recurring,
         'open_amount' => openAmount,
+        'qr_static' => qrStatic,
+        'qr_dynamic' => qrDynamic,
+        'payment_link' => paymentLink,
+        'payment_prompt' => paymentPrompt,
         _ => throw ArgumentError('Unknown PaymentRequestType: $value'),
       };
 }
@@ -255,11 +238,11 @@ class PaymentTransaction {
   final String paymentMethod;
   final TransactionStatus status;
   final String azampayReference;
-  final String externalId;
+  final String referenceId;
   final String description;
-  final String failureReason;
+  final String? failureReason;
   final String createdAt;
-  final String confirmedAt;
+  final String? confirmedAt;
 
   const PaymentTransaction({
     required this.id,
@@ -275,32 +258,32 @@ class PaymentTransaction {
     required this.paymentMethod,
     required this.status,
     required this.azampayReference,
-    required this.externalId,
+    required this.referenceId,
     required this.description,
-    required this.failureReason,
+    this.failureReason,
     required this.createdAt,
-    required this.confirmedAt,
+    this.confirmedAt,
   });
 
   factory PaymentTransaction.fromJson(Map<String, dynamic> json) => PaymentTransaction(
         id: json['id'] as String,
-        paymentRequestId: json['payment_request_id'] as String,
+        paymentRequestId: json['payment_request_id'] as String? ?? '',
         businessId: json['business_id'] as String,
         businessWalletId: json['business_wallet_id'] as String,
-        customerPhone: json['customer_phone'] as String,
-        customerName: json['customer_name'] as String,
+        customerPhone: json['customer_phone'] as String? ?? '',
+        customerName: json['customer_name'] as String? ?? '',
         amount: json['amount'] as String,
-        feeAmount: json['fee_amount'] as String,
-        netAmount: json['net_amount'] as String,
+        feeAmount: json['fee_amount'] as String? ?? '0',
+        netAmount: json['net_amount'] as String? ?? '0',
         currency: json['currency'] as String,
         paymentMethod: json['payment_method'] as String,
         status: TransactionStatus.fromString(json['status'] as String),
-        azampayReference: json['azampay_reference'] as String,
-        externalId: json['external_id'] as String,
-        description: json['description'] as String,
-        failureReason: json['failure_reason'] as String,
+        azampayReference: json['azampay_reference'] as String? ?? '',
+        referenceId: json['reference_id'] as String? ?? '',
+        description: json['description'] as String? ?? '',
+        failureReason: json['failure_reason'] as String?,
         createdAt: json['created_at'] as String,
-        confirmedAt: json['confirmed_at'] as String,
+        confirmedAt: json['confirmed_at'] as String?,
       );
 }
 
@@ -326,32 +309,38 @@ class InitiateCollectionParams {
   final String businessId;
   final String walletId;
   final String customerPhone;
+  final String? customerName;
   final String amount;
   final String paymentMethod;
-  final String? currency;
+  final String currency;
   final String? description;
-  final String? externalId;
+  final String? referenceId;
+  final String? paymentRequestId;
 
   const InitiateCollectionParams({
     required this.businessId,
     required this.walletId,
     required this.customerPhone,
+    this.customerName,
     required this.amount,
     required this.paymentMethod,
-    this.currency,
+    this.currency = 'RWF',
     this.description,
-    this.externalId,
+    this.referenceId,
+    this.paymentRequestId,
   });
 
   Map<String, dynamic> toJson() => {
         'business_id': businessId,
         'wallet_id': walletId,
         'customer_phone': customerPhone,
+        if (customerName != null) 'customer_name': customerName,
         'amount': amount,
         'payment_method': paymentMethod,
-        if (currency != null) 'currency': currency,
+        'currency': currency,
         if (description != null) 'description': description,
-        if (externalId != null) 'external_id': externalId,
+        if (referenceId != null) 'reference_id': referenceId,
+        if (paymentRequestId != null) 'payment_request_id': paymentRequestId,
       };
 }
 
@@ -383,70 +372,6 @@ class CollectionResponse {
       );
 }
 
-/// Disbursement (payout to mobile money).
-class Disbursement {
-  final String id;
-  final String businessId;
-  final String walletId;
-  final String amount;
-  final String feeAmount;
-  final String netAmount;
-  final String currency;
-  final String destinationType;
-  final String destinationRef;
-  final String destinationName;
-  final TransactionStatus status;
-  final String azampayReference;
-  final String externalId;
-  final String description;
-  final String failureReason;
-  final String idempotencyKey;
-  final String createdAt;
-  final String confirmedAt;
-
-  const Disbursement({
-    required this.id,
-    required this.businessId,
-    required this.walletId,
-    required this.amount,
-    required this.feeAmount,
-    required this.netAmount,
-    required this.currency,
-    required this.destinationType,
-    required this.destinationRef,
-    required this.destinationName,
-    required this.status,
-    required this.azampayReference,
-    required this.externalId,
-    required this.description,
-    required this.failureReason,
-    required this.idempotencyKey,
-    required this.createdAt,
-    required this.confirmedAt,
-  });
-
-  factory Disbursement.fromJson(Map<String, dynamic> json) => Disbursement(
-        id: json['id'] as String,
-        businessId: json['business_id'] as String,
-        walletId: json['wallet_id'] as String,
-        amount: json['amount'] as String,
-        feeAmount: json['fee_amount'] as String,
-        netAmount: json['net_amount'] as String,
-        currency: json['currency'] as String,
-        destinationType: json['destination_type'] as String,
-        destinationRef: json['destination_ref'] as String,
-        destinationName: json['destination_name'] as String,
-        status: TransactionStatus.fromString(json['status'] as String),
-        azampayReference: json['azampay_reference'] as String,
-        externalId: json['external_id'] as String,
-        description: json['description'] as String,
-        failureReason: json['failure_reason'] as String,
-        idempotencyKey: json['idempotency_key'] as String,
-        createdAt: json['created_at'] as String,
-        confirmedAt: json['confirmed_at'] as String,
-      );
-}
-
 /// Parameters for initiating a disbursement.
 class InitiateDisbursementParams {
   final String businessId;
@@ -457,7 +382,7 @@ class InitiateDisbursementParams {
   final String? destinationName;
   final String? currency;
   final String? description;
-  final String idempotencyKey;
+  final String referenceId;
 
   const InitiateDisbursementParams({
     required this.businessId,
@@ -468,7 +393,7 @@ class InitiateDisbursementParams {
     this.destinationName,
     this.currency,
     this.description,
-    required this.idempotencyKey,
+    required this.referenceId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -480,8 +405,104 @@ class InitiateDisbursementParams {
         if (destinationName != null) 'destination_name': destinationName,
         if (currency != null) 'currency': currency,
         if (description != null) 'description': description,
-        'idempotency_key': idempotencyKey,
+        'reference_id': referenceId,
       };
+}
+
+// ── Webhooks ──
+
+/// Webhook event types sent by Wistfare.
+enum WebhookEvent {
+  collectionCompleted,
+  collectionFailed,
+  disbursementCompleted,
+  disbursementFailed;
+
+  static WebhookEvent fromString(String value) => switch (value) {
+        'collection.completed' => collectionCompleted,
+        'collection.failed' => collectionFailed,
+        'disbursement.completed' => disbursementCompleted,
+        'disbursement.failed' => disbursementFailed,
+        _ => throw ArgumentError('Unknown WebhookEvent: $value'),
+      };
+}
+
+/// Webhook transaction type.
+enum WebhookTransactionType {
+  collection,
+  disbursement;
+
+  static WebhookTransactionType fromString(String value) => switch (value) {
+        'collection' => collection,
+        'disbursement' => disbursement,
+        _ => throw ArgumentError('Unknown WebhookTransactionType: $value'),
+      };
+}
+
+/// Payload delivered to your webhook endpoint.
+class WebhookPayload {
+  final WebhookEvent event;
+  final String transactionId;
+  final WebhookTransactionType transactionType;
+  final String status;
+  final String amount;
+  final String feeAmount;
+  final String netAmount;
+  final String currency;
+  final String businessWalletId;
+  final String customerPhone;
+  final String customerName;
+  final String paymentMethod;
+  final String referenceId;
+  final String description;
+  final String failureReason;
+  final String timestamp;
+
+  const WebhookPayload({
+    required this.event,
+    required this.transactionId,
+    required this.transactionType,
+    required this.status,
+    required this.amount,
+    required this.feeAmount,
+    required this.netAmount,
+    required this.currency,
+    required this.businessWalletId,
+    required this.customerPhone,
+    required this.customerName,
+    required this.paymentMethod,
+    required this.referenceId,
+    required this.description,
+    required this.failureReason,
+    required this.timestamp,
+  });
+
+  factory WebhookPayload.fromJson(Map<String, dynamic> json) => WebhookPayload(
+        event: WebhookEvent.fromString(json['event'] as String),
+        transactionId: json['transaction_id'] as String,
+        transactionType: WebhookTransactionType.fromString(json['transaction_type'] as String),
+        status: json['status'] as String,
+        amount: json['amount'] as String,
+        feeAmount: json['fee_amount'] as String,
+        netAmount: json['net_amount'] as String,
+        currency: json['currency'] as String,
+        businessWalletId: json['business_wallet_id'] as String,
+        customerPhone: json['customer_phone'] as String,
+        customerName: json['customer_name'] as String? ?? '',
+        paymentMethod: json['payment_method'] as String,
+        referenceId: json['reference_id'] as String? ?? '',
+        description: json['description'] as String? ?? '',
+        failureReason: json['failure_reason'] as String? ?? '',
+        timestamp: json['timestamp'] as String,
+      );
+}
+
+/// Parse a raw webhook request body into a [WebhookPayload].
+WebhookPayload parseWebhookPayload(String body) {
+  final json = Map<String, dynamic>.from(
+    const JsonCodec().decode(body) as Map,
+  );
+  return WebhookPayload.fromJson(json);
 }
 
 /// Disbursement initiation response.
@@ -507,57 +528,4 @@ class DisbursementResponse {
         netAmount: json['net_amount'] as String,
         estimatedArrival: json['estimated_arrival'] as String,
       );
-}
-
-/// Fee calculation result.
-class CalculateFeeResult {
-  final String grossAmount;
-  final String feeAmount;
-  final String netAmount;
-  final FeeModel feeModel;
-  final String percentageRate;
-  final String flatAmount;
-  final String currency;
-
-  const CalculateFeeResult({
-    required this.grossAmount,
-    required this.feeAmount,
-    required this.netAmount,
-    required this.feeModel,
-    required this.percentageRate,
-    required this.flatAmount,
-    required this.currency,
-  });
-
-  factory CalculateFeeResult.fromJson(Map<String, dynamic> json) => CalculateFeeResult(
-        grossAmount: json['gross_amount'] as String,
-        feeAmount: json['fee_amount'] as String,
-        netAmount: json['net_amount'] as String,
-        feeModel: FeeModel.fromString(json['fee_model'] as String),
-        percentageRate: json['percentage_rate'] as String,
-        flatAmount: json['flat_amount'] as String,
-        currency: json['currency'] as String,
-      );
-}
-
-/// Parameters for fee calculation.
-class CalculateFeeParams {
-  final String businessId;
-  final String amount;
-  final TransactionType transactionType;
-  final String? currency;
-
-  const CalculateFeeParams({
-    required this.businessId,
-    required this.amount,
-    required this.transactionType,
-    this.currency,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'business_id': businessId,
-        'amount': amount,
-        'transaction_type': transactionType.name,
-        if (currency != null) 'currency': currency,
-      };
 }

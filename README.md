@@ -49,7 +49,7 @@ print('${collection.transactionId} ${collection.status}');
 ```dart
 final wf = Wistfare(
   apiKey: 'wf_live_xxx',                        // Required — wf_live_* or wf_test_*
-  baseUrl: 'https://api.wistfare.com',           // Optional
+  baseUrl: 'https://api-production.wistfare.com',           // Optional
   timeout: Duration(seconds: 30),                // Optional (default: 30s)
   maxRetries: 2,                                 // Optional — retries on 5xx/network errors
 );
@@ -111,7 +111,7 @@ final payout = await payments.initiateDisbursement(InitiateDisbursementParams(
   amount: '5000',
   destinationType: 'mobile_money',
   destinationRef: '250788000000',
-  idempotencyKey: 'disb_unique_123',
+  referenceId: 'disb_unique_123',
 ));
 
 // List transactions
@@ -161,7 +161,7 @@ final transfer = await wallet.transfer(TransferParams(
   toWalletId: 'wal_789',
   amount: '5000',
   description: 'Split dinner',
-  idempotencyKey: 'txn_unique_123',
+  referenceId: 'txn_unique_123',
 ));
 
 // Deposit (fund wallet via mobile money)

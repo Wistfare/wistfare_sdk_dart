@@ -82,32 +82,11 @@ Map<String, dynamic> _transactionJson() => {
       'payment_method': 'mtn',
       'status': 'completed',
       'azampay_reference': 'az_ref',
-      'external_id': 'ext_1',
+      'reference_id': 'ref_1',
       'description': 'Payment',
       'failure_reason': '',
       'created_at': '2026-01-01T00:00:00Z',
       'confirmed_at': '2026-01-01T00:01:00Z',
-    };
-
-Map<String, dynamic> _disbursementJson() => {
-      'id': 'disb_1',
-      'business_id': 'biz_1',
-      'wallet_id': 'wal_1',
-      'amount': '5000',
-      'fee_amount': '500',
-      'net_amount': '4500',
-      'currency': 'RWF',
-      'destination_type': 'mobile_money',
-      'destination_ref': '+250781234567',
-      'destination_name': 'John',
-      'status': 'pending',
-      'azampay_reference': 'az_456',
-      'external_id': 'ext_456',
-      'description': 'Payout',
-      'failure_reason': '',
-      'idempotency_key': 'idem_1',
-      'created_at': '2026-01-01T00:00:00Z',
-      'confirmed_at': '',
     };
 
 Map<String, dynamic> _listJson(List<Map<String, dynamic>> items) => {
@@ -129,23 +108,6 @@ void main() {
 
   group('PaymentsClient', () {
     // ── Fee Management ──
-
-    test('setFeeConfig posts to /v1/fees', () async {
-      mock.nextResponse = _feeConfigJson();
-      const params = SetFeeConfigParams(
-        businessId: 'biz_1',
-        transactionType: TransactionType.collection,
-        feeModel: FeeModel.percentage,
-      );
-
-      final result = await client.setFeeConfig(params);
-
-      expect(mock.calls, hasLength(1));
-      expect(mock.calls.first.method, 'POST');
-      expect(mock.calls.first.path, '/v1/fees');
-      expect(mock.calls.first.body!['business_id'], 'biz_1');
-      expect(result.id, 'fee_1');
-    });
 
     test('getFeeConfig gets /v1/fees/{businessId} with query', () async {
       mock.nextResponse = _feeConfigJson();
@@ -179,87 +141,6 @@ void main() {
       expect(mock.calls.first.query!['per_page'], '10');
     });
 
-    test('deleteFeeConfig deletes /v1/fees/{id}', () async {
-      mock.nextResponse = null;
-
-      await client.deleteFeeConfig('fee_1');
-
-      expect(mock.calls.first.method, 'DELETE');
-      expect(mock.calls.first.path, '/v1/fees/fee_1');
-    });
-
-    test('calculateFee posts to /v1/fees/calculate', () async {
-      mock.nextResponse = {
-        'gross_amount': '10000',
-        'fee_amount': '250',
-        'net_amount': '9750',
-        'fee_model': 'percentage',
-        'percentage_rate': '2.5',
-        'flat_amount': '0',
-        'currency': 'RWF',
-      };
-      const params = CalculateFeeParams(
-        businessId: 'biz_1',
-        amount: '10000',
-        transactionType: TransactionType.collection,
-      );
-
-      final result = await client.calculateFee(params);
-
-      expect(mock.calls.first.method, 'POST');
-      expect(mock.calls.first.path, '/v1/fees/calculate');
-      expect(result.grossAmount, '10000');
-    });
-
-    // ── Payment Requests ──
-
-    test('createPaymentRequest posts to /v1/payment-requests', () async {
-      mock.nextResponse = _paymentRequestJson();
-      const params = CreatePaymentRequestParams(
-        businessId: 'biz_1',
-        walletId: 'wal_1',
-        requestType: PaymentRequestType.oneTime,
-        amount: '5000',
-      );
-
-      final result = await client.createPaymentRequest(params);
-
-      expect(mock.calls.first.method, 'POST');
-      expect(mock.calls.first.path, '/v1/payment-requests');
-      expect(result.id, 'pr_1');
-    });
-
-    test('getPaymentRequest gets /v1/payment-requests/{id}', () async {
-      mock.nextResponse = _paymentRequestJson();
-
-      final result = await client.getPaymentRequest('pr_1');
-
-      expect(mock.calls.first.method, 'GET');
-      expect(mock.calls.first.path, '/v1/payment-requests/pr_1');
-      expect(result.id, 'pr_1');
-    });
-
-    test('listPaymentRequests gets /v1/payment-requests', () async {
-      mock.nextResponse = _listJson([_paymentRequestJson()]);
-
-      final result = await client.listPaymentRequests('biz_1');
-
-      expect(mock.calls.first.method, 'GET');
-      expect(mock.calls.first.path, '/v1/payment-requests');
-      expect(mock.calls.first.query!['business_id'], 'biz_1');
-      expect(result.data, hasLength(1));
-    });
-
-    test('cancelPaymentRequest posts to /v1/payment-requests/{id}/cancel', () async {
-      mock.nextResponse = _paymentRequestJson();
-
-      final result = await client.cancelPaymentRequest('pr_1');
-
-      expect(mock.calls.first.method, 'POST');
-      expect(mock.calls.first.path, '/v1/payment-requests/pr_1/cancel');
-      expect(result.id, 'pr_1');
-    });
-
     // ── Collections ──
 
     test('initiateCollection posts to /v1/collections', () async {
@@ -287,53 +168,59 @@ void main() {
       expect(result.transactionId, 'txn_1');
     });
 
-    // ── Transactions ──
-
-    test('getTransaction gets /v1/transactions/{id}', () async {
-      mock.nextResponse = _transactionJson();
-
-      final result = await client.getTransaction('txn_1');
-
-      expect(mock.calls.first.method, 'GET');
-      expect(mock.calls.first.path, '/v1/transactions/txn_1');
-      expect(result.id, 'txn_1');
-    });
-
-    test('listTransactions gets /v1/transactions with filters', () async {
+    test('listCollections gets /v1/collections with filters', () async {
       mock.nextResponse = _listJson([_transactionJson()]);
 
-      final result = await client.listTransactions(
-        'biz_1',
+      final result = await client.listCollections(
+        businessId: 'biz_1',
+        referenceId: 'ref_1',
         status: 'completed',
         fromDate: '2026-01-01',
         toDate: '2026-01-31',
-        paymentMethod: 'mtn',
         page: 1,
         perPage: 10,
       );
 
       expect(mock.calls.first.method, 'GET');
-      expect(mock.calls.first.path, '/v1/transactions');
+      expect(mock.calls.first.path, '/v1/collections');
       final q = mock.calls.first.query!;
       expect(q['business_id'], 'biz_1');
+      expect(q['reference_id'], 'ref_1');
       expect(q['status'], 'completed');
       expect(q['from_date'], '2026-01-01');
       expect(q['to_date'], '2026-01-31');
-      expect(q['payment_method'], 'mtn');
       expect(q['page'], '1');
       expect(q['per_page'], '10');
       expect(result.data, hasLength(1));
     });
 
-    test('listTransactions omits null filters', () async {
+    test('listCollections omits null filters', () async {
       mock.nextResponse = _listJson([]);
 
-      await client.listTransactions('biz_1');
+      await client.listCollections(businessId: 'biz_1');
 
       final q = mock.calls.first.query!;
       expect(q['business_id'], 'biz_1');
       expect(q.containsKey('status'), isFalse);
       expect(q.containsKey('from_date'), isFalse);
+    });
+
+    // ── Payment Requests ──
+
+    test('createPaymentRequest posts to /v1/payment-requests', () async {
+      mock.nextResponse = _paymentRequestJson();
+      const params = CreatePaymentRequestParams(
+        businessId: 'biz_1',
+        walletId: 'wal_1',
+        requestType: PaymentRequestType.oneTime,
+        amount: '5000',
+      );
+
+      final result = await client.createPaymentRequest(params);
+
+      expect(mock.calls.first.method, 'POST');
+      expect(mock.calls.first.path, '/v1/payment-requests');
+      expect(result.id, 'pr_1');
     });
 
     // ── Disbursements ──
@@ -352,38 +239,15 @@ void main() {
         amount: '5000',
         destinationType: 'mobile_money',
         destinationRef: '+250781234567',
-        idempotencyKey: 'idem_1',
+        referenceId: 'idem_1',
       );
 
       final result = await client.initiateDisbursement(params);
 
       expect(mock.calls.first.method, 'POST');
       expect(mock.calls.first.path, '/v1/disbursements');
-      expect(mock.calls.first.body!['idempotency_key'], 'idem_1');
+      expect(mock.calls.first.body!['reference_id'], 'idem_1');
       expect(result.disbursementId, 'disb_1');
-    });
-
-    test('getDisbursement gets /v1/disbursements/{id}', () async {
-      mock.nextResponse = _disbursementJson();
-
-      final result = await client.getDisbursement('disb_1');
-
-      expect(mock.calls.first.method, 'GET');
-      expect(mock.calls.first.path, '/v1/disbursements/disb_1');
-      expect(result.id, 'disb_1');
-    });
-
-    test('listDisbursements gets /v1/disbursements', () async {
-      mock.nextResponse = _listJson([_disbursementJson()]);
-
-      final result = await client.listDisbursements('biz_1', page: 1, perPage: 5);
-
-      expect(mock.calls.first.method, 'GET');
-      expect(mock.calls.first.path, '/v1/disbursements');
-      expect(mock.calls.first.query!['business_id'], 'biz_1');
-      expect(mock.calls.first.query!['page'], '1');
-      expect(mock.calls.first.query!['per_page'], '5');
-      expect(result.data, hasLength(1));
     });
   });
 }

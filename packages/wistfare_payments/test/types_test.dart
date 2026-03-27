@@ -169,7 +169,7 @@ void main() {
         'payment_method': 'mtn',
         'status': 'completed',
         'azampay_reference': 'az_ref_123',
-        'external_id': 'ext_123',
+        'reference_id': 'ref_123',
         'description': 'Payment for order',
         'failure_reason': '',
         'created_at': '2026-01-01T00:00:00Z',
@@ -190,7 +190,7 @@ void main() {
       expect(txn.paymentMethod, 'mtn');
       expect(txn.status, TransactionStatus.completed);
       expect(txn.azampayReference, 'az_ref_123');
-      expect(txn.externalId, 'ext_123');
+      expect(txn.referenceId, 'ref_123');
       expect(txn.description, 'Payment for order');
       expect(txn.failureReason, '');
       expect(txn.createdAt, '2026-01-01T00:00:00Z');
@@ -219,51 +219,6 @@ void main() {
     });
   });
 
-  group('Disbursement', () {
-    test('fromJson parses all fields', () {
-      final json = {
-        'id': 'disb_1',
-        'business_id': 'biz_1',
-        'wallet_id': 'wal_1',
-        'amount': '5000',
-        'fee_amount': '500',
-        'net_amount': '4500',
-        'currency': 'RWF',
-        'destination_type': 'mobile_money',
-        'destination_ref': '+250781234567',
-        'destination_name': 'John Doe',
-        'status': 'processing',
-        'azampay_reference': 'az_456',
-        'external_id': 'ext_456',
-        'description': 'Payout',
-        'failure_reason': '',
-        'idempotency_key': 'idem_123',
-        'created_at': '2026-01-01T00:00:00Z',
-        'confirmed_at': '2026-01-01T00:05:00Z',
-      };
-
-      final disb = Disbursement.fromJson(json);
-      expect(disb.id, 'disb_1');
-      expect(disb.businessId, 'biz_1');
-      expect(disb.walletId, 'wal_1');
-      expect(disb.amount, '5000');
-      expect(disb.feeAmount, '500');
-      expect(disb.netAmount, '4500');
-      expect(disb.currency, 'RWF');
-      expect(disb.destinationType, 'mobile_money');
-      expect(disb.destinationRef, '+250781234567');
-      expect(disb.destinationName, 'John Doe');
-      expect(disb.status, TransactionStatus.processing);
-      expect(disb.azampayReference, 'az_456');
-      expect(disb.externalId, 'ext_456');
-      expect(disb.description, 'Payout');
-      expect(disb.failureReason, '');
-      expect(disb.idempotencyKey, 'idem_123');
-      expect(disb.createdAt, '2026-01-01T00:00:00Z');
-      expect(disb.confirmedAt, '2026-01-01T00:05:00Z');
-    });
-  });
-
   group('DisbursementResponse', () {
     test('fromJson parses all fields', () {
       final json = {
@@ -280,66 +235,6 @@ void main() {
       expect(resp.feeAmount, '500');
       expect(resp.netAmount, '4500');
       expect(resp.estimatedArrival, '2026-01-01T01:00:00Z');
-    });
-  });
-
-  group('CalculateFeeResult', () {
-    test('fromJson parses all fields', () {
-      final json = {
-        'gross_amount': '10000',
-        'fee_amount': '250',
-        'net_amount': '9750',
-        'fee_model': 'percentage',
-        'percentage_rate': '2.5',
-        'flat_amount': '0',
-        'currency': 'RWF',
-      };
-
-      final result = CalculateFeeResult.fromJson(json);
-      expect(result.grossAmount, '10000');
-      expect(result.feeAmount, '250');
-      expect(result.netAmount, '9750');
-      expect(result.feeModel, FeeModel.percentage);
-      expect(result.percentageRate, '2.5');
-      expect(result.flatAmount, '0');
-      expect(result.currency, 'RWF');
-    });
-  });
-
-  group('SetFeeConfigParams', () {
-    test('toJson includes required fields', () {
-      const params = SetFeeConfigParams(
-        businessId: 'biz_1',
-        transactionType: TransactionType.collection,
-        feeModel: FeeModel.percentage,
-      );
-
-      final json = params.toJson();
-      expect(json['business_id'], 'biz_1');
-      expect(json['transaction_type'], 'collection');
-      expect(json['fee_model'], 'percentage');
-      expect(json.containsKey('percentage_rate'), isFalse);
-    });
-
-    test('toJson includes optional fields when set', () {
-      const params = SetFeeConfigParams(
-        businessId: 'biz_1',
-        transactionType: TransactionType.disbursement,
-        feeModel: FeeModel.percentagePlusFlat,
-        percentageRate: '2.5',
-        flatAmount: '100',
-        minFee: '50',
-        maxFee: '5000',
-        currency: 'RWF',
-      );
-
-      final json = params.toJson();
-      expect(json['percentage_rate'], '2.5');
-      expect(json['flat_amount'], '100');
-      expect(json['min_fee'], '50');
-      expect(json['max_fee'], '5000');
-      expect(json['currency'], 'RWF');
-      expect(json['fee_model'], 'percentage_plus_flat');
     });
   });
 
@@ -411,13 +306,13 @@ void main() {
         paymentMethod: 'mtn',
         currency: 'RWF',
         description: 'Order #123',
-        externalId: 'ext_1',
+        referenceId: 'ref_1',
       );
 
       final json = params.toJson();
       expect(json['currency'], 'RWF');
       expect(json['description'], 'Order #123');
-      expect(json['external_id'], 'ext_1');
+      expect(json['reference_id'], 'ref_1');
     });
   });
 
@@ -429,7 +324,7 @@ void main() {
         amount: '5000',
         destinationType: 'mobile_money',
         destinationRef: '+250781234567',
-        idempotencyKey: 'idem_1',
+        referenceId: 'idem_1',
       );
 
       final json = params.toJson();
@@ -438,7 +333,7 @@ void main() {
       expect(json['amount'], '5000');
       expect(json['destination_type'], 'mobile_money');
       expect(json['destination_ref'], '+250781234567');
-      expect(json['idempotency_key'], 'idem_1');
+      expect(json['reference_id'], 'idem_1');
       expect(json.containsKey('destination_name'), isFalse);
     });
 
@@ -452,41 +347,13 @@ void main() {
         destinationName: 'John Doe',
         currency: 'RWF',
         description: 'Payout',
-        idempotencyKey: 'idem_1',
+        referenceId: 'idem_1',
       );
 
       final json = params.toJson();
       expect(json['destination_name'], 'John Doe');
       expect(json['currency'], 'RWF');
       expect(json['description'], 'Payout');
-    });
-  });
-
-  group('CalculateFeeParams', () {
-    test('toJson includes required fields', () {
-      const params = CalculateFeeParams(
-        businessId: 'biz_1',
-        amount: '10000',
-        transactionType: TransactionType.collection,
-      );
-
-      final json = params.toJson();
-      expect(json['business_id'], 'biz_1');
-      expect(json['amount'], '10000');
-      expect(json['transaction_type'], 'collection');
-      expect(json.containsKey('currency'), isFalse);
-    });
-
-    test('toJson includes currency when set', () {
-      const params = CalculateFeeParams(
-        businessId: 'biz_1',
-        amount: '10000',
-        transactionType: TransactionType.disbursement,
-        currency: 'RWF',
-      );
-
-      final json = params.toJson();
-      expect(json['currency'], 'RWF');
     });
   });
 }
