@@ -441,21 +441,52 @@ enum WebhookTransactionType {
 
 /// Payload delivered to your webhook endpoint.
 class WebhookPayload {
+  /// One of the webhook event types (e.g. `collection.completed`, `payment.failed`).
   final WebhookEvent event;
+
+  /// Unique Wistfare transaction identifier.
   final String transactionId;
+
+  /// `collection` or `disbursement`.
   final WebhookTransactionType transactionType;
+
+  /// Terminal status: `pending`, `completed`, `failed`, or `expired`.
   final String status;
+
+  /// Original transaction amount.
   final String amount;
+
+  /// Fee deducted from the transaction.
   final String feeAmount;
+
+  /// Amount after fees.
   final String netAmount;
+
+  /// Currency code (e.g. `RWF`).
   final String currency;
+
+  /// The business wallet involved.
   final String businessWalletId;
+
+  /// Customer phone number.
   final String customerPhone;
+
+  /// Customer display name (may be empty).
   final String customerName;
+
+  /// Payment rail used (e.g. `mtn_momo`, `airtel_money`).
   final String paymentMethod;
+
+  /// Your original reference ID passed when creating the collection or disbursement.
   final String referenceId;
+
+  /// Human-readable description.
   final String description;
+
+  /// Empty on success; contains the error message on failure.
   final String failureReason;
+
+  /// ISO 8601 timestamp of the event.
   final String timestamp;
 
   const WebhookPayload({
